@@ -1,5 +1,5 @@
 use bencher::{black_box, Bencher};
-use tokio::sync::mpsc;
+use tokio::sync::fmpsc;
 
 type Medium = [usize; 64];
 type Large = [Medium; 64];
@@ -13,19 +13,19 @@ fn rt() -> tokio::runtime::Runtime {
 
 fn create_1_medium(b: &mut Bencher) {
     b.iter(|| {
-        black_box(&mpsc::channel::<Medium>(1));
+        black_box(&fmpsc::channel::<Medium>(1));
     });
 }
 
 fn create_100_medium(b: &mut Bencher) {
     b.iter(|| {
-        black_box(&mpsc::channel::<Medium>(100));
+        black_box(&fmpsc::channel::<Medium>(100));
     });
 }
 
 fn create_100_000_medium(b: &mut Bencher) {
     b.iter(|| {
-        black_box(&mpsc::channel::<Medium>(100_000));
+        black_box(&fmpsc::channel::<Medium>(100_000));
     });
 }
 
@@ -33,7 +33,7 @@ fn send_medium(b: &mut Bencher) {
     let rt = rt();
 
     b.iter(|| {
-        let (tx, mut rx) = mpsc::channel::<Medium>(1000);
+        let (mut tx, mut rx) = fmpsc::channel::<Medium>(1000);
 
         let _ = rt.block_on(tx.send([0; 64]));
 
@@ -45,7 +45,7 @@ fn send_large(b: &mut Bencher) {
     let rt = rt();
 
     b.iter(|| {
-        let (tx, mut rx) = mpsc::channel::<Large>(1000);
+        let (mut tx, mut rx) = fmpsc::channel::<Large>(1000);
 
         let _ = rt.block_on(tx.send([[0; 64]; 64]));
 
@@ -57,7 +57,7 @@ fn send_large_boxed(b: &mut Bencher) {
     let rt = rt();
 
     b.iter(|| {
-        let (tx, mut rx) = mpsc::channel::<Box<Large>>(1000);
+        let (mut tx, mut rx) = fmpsc::channel::<Box<Large>>(1000);
 
         let _ = rt.block_on(tx.send(Box::new([[0; 64]; 64])));
 
@@ -70,10 +70,10 @@ fn contention_bounded(b: &mut Bencher) {
 
     b.iter(|| {
         rt.block_on(async move {
-            let (tx, mut rx) = mpsc::channel::<usize>(1_000_000);
+            let (tx, mut rx) = fmpsc::channel::<usize>(1_000_000);
 
             for _ in 0..5 {
-                let tx = tx.clone();
+                let mut tx = tx.clone();
                 tokio::spawn(async move {
                     for i in 0..1000 {
                         tx.send(i).await.unwrap();
@@ -93,10 +93,10 @@ fn contention_bounded_full(b: &mut Bencher) {
 
     b.iter(|| {
         rt.block_on(async move {
-            let (tx, mut rx) = mpsc::channel::<usize>(100);
+            let (tx, mut rx) = fmpsc::channel::<usize>(100);
 
             for _ in 0..5 {
-                let tx = tx.clone();
+                let mut tx = tx.clone();
                 tokio::spawn(async move {
                     for i in 0..1000 {
                         tx.send(i).await.unwrap();
@@ -116,10 +116,10 @@ fn contention_unbounded(b: &mut Bencher) {
 
     b.iter(|| {
         rt.block_on(async move {
-            let (tx, mut rx) = mpsc::unbounded_channel::<usize>();
+            let (tx, mut rx) = fmpsc::unbounded_channel::<usize>();
 
             for _ in 0..5 {
-                let tx = tx.clone();
+                let mut tx = tx.clone();
                 tokio::spawn(async move {
                     for i in 0..1000 {
                         tx.send(i).unwrap();
@@ -139,7 +139,7 @@ fn uncontented_bounded(b: &mut Bencher) {
 
     b.iter(|| {
         rt.block_on(async move {
-            let (tx, mut rx) = mpsc::channel::<usize>(1_000_000);
+            let (mut tx, mut rx) = fmpsc::channel::<usize>(1_000_000);
 
             for i in 0..5000 {
                 tx.send(i).await.unwrap();
@@ -157,7 +157,7 @@ fn uncontented_unbounded(b: &mut Bencher) {
 
     b.iter(|| {
         rt.block_on(async move {
-            let (tx, mut rx) = mpsc::unbounded_channel::<usize>();
+            let (mut tx, mut rx) = fmpsc::unbounded_channel::<usize>();
 
             for i in 0..5000 {
                 tx.send(i).unwrap();

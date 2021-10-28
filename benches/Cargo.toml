@@ -26,6 +26,11 @@ path = "sync_mpsc.rs"
 harness = false
 
 [[bench]]
+name = "sync_fmpsc"
+path = "sync_fmpsc.rs"
+harness = false
+
+[[bench]]
 name = "rt_multi_threaded"
 path = "rt_multi_threaded.rs"
 harness = false

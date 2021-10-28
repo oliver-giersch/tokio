@@ -438,6 +438,7 @@ cfg_sync! {
 
     pub mod broadcast;
 
+    pub mod fmpsc;
     pub mod mpsc;
 
     mod mutex;
