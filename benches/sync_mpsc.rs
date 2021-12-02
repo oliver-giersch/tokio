@@ -31,36 +31,30 @@ fn create_100_000_medium(b: &mut Bencher) {
 
 fn send_medium(b: &mut Bencher) {
     let rt = rt();
+    let (tx, mut rx) = mpsc::channel::<Medium>(1000);
 
     b.iter(|| {
-        let (tx, mut rx) = mpsc::channel::<Medium>(1000);
-
         let _ = rt.block_on(tx.send([0; 64]));
-
         rt.block_on(rx.recv()).unwrap();
     });
 }
 
 fn send_large(b: &mut Bencher) {
     let rt = rt();
+    let (tx, mut rx) = mpsc::channel::<Large>(1000);
 
     b.iter(|| {
-        let (tx, mut rx) = mpsc::channel::<Large>(1000);
-
         let _ = rt.block_on(tx.send([[0; 64]; 64]));
-
         rt.block_on(rx.recv()).unwrap();
     });
 }
 
 fn send_large_boxed(b: &mut Bencher) {
     let rt = rt();
+    let (tx, mut rx) = mpsc::channel::<Box<Large>>(1000);
 
     b.iter(|| {
-        let (tx, mut rx) = mpsc::channel::<Box<Large>>(1000);
-
         let _ = rt.block_on(tx.send(Box::new([[0; 64]; 64])));
-
         let _r = *rt.block_on(rx.recv()).unwrap();
     });
 }
